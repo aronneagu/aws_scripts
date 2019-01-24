@@ -16,7 +16,11 @@ tmpfile=$(mktemp "${TMPDIR:-/tmp/}$(basename "$0").XXXX")
 for bucket in $(aws --profile "$aws_profile" s3 ls|tr -s '[:space:]'|cut -f3 -d" ")
 do
   bucket_owner=''
-  bucket_owner=$(aws --output text --profile "$aws_profile" s3api get-bucket-tagging --bucket "$bucket" --query "TagSet[?Key=='date_owner'].Value|[0]" 2>/dev/null)
+  bucket_owner=$(aws --output text --profile "$aws_profile" s3api get-bucket-tagging --bucket "$bucket" --query "TagSet[?Key=='data_owner'].Value|[0]" 2>/dev/null)
+  # Handle the situation when data_owner tag is not defined bucket_owner will have value "None"
+  if [ "$bucket_owner" = "None" ]; then
+       bucket_owner=''
+  fi
   echo "$bucket $bucket_owner" >> "$tmpfile"
 done
 column -t "$tmpfile"
