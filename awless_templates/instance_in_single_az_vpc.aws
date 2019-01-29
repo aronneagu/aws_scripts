@@ -1,0 +1,27 @@
+# Title: Create VPC with one public subnet and one instance
+# To execute: awless run -f instance_in_single_az_vpc.aws
+
+# Variables
+vpc.cidr = 10.8.10.0/24
+vpc.name = $vpc.cidr
+subnet.cidr = $vpc.cidr
+subnet.name = $subnet.cidr
+instance.distro = amazonlinux
+instance.keypair = aron.neagu
+instance.name = test_ec2_instance
+securitygroup.name = test_sg
+securitygroup.description = test_sg
+
+vpc = create vpc cidr=$vpc.cidr name=$vpc.name
+igw = create internetgateway
+attach internetgateway id=$igw vpc=$vpc
+
+public_subnet = create subnet cidr=$subnet.cidr name=$subnet.name vpc=$vpc public=true availabilityzone=eu-west-1a
+routetable = create routetable vpc=$vpc
+create route table=$routetable cidr=0.0.0.0/0 gateway=$igw
+attach routetable id=$routetable subnet=$public_subnet
+
+securitygroup = create securitygroup name=$securitygroup.name description=$securitygroup.description vpc=$vpc
+update securitygroup id=$securitygroup inbound=authorize protocol=tcp cidr=0.0.0.0/0 portrange=22
+
+create instance subnet=$public_subnet count=1 distro=$instance.distro type=t2.nano keypair=$instance.keypair name=$instance.name securitygroup=$securitygroup
