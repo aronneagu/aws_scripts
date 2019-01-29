@@ -1,9 +1,16 @@
 ---
 - name: Install Kafka
   hosts: localhost
+  become: true
   tasks:
+    - name: Install JRE 8.0
+      package: name=java-1.8.0-openjdk state=present
+
+    - name: Point JRE alternative to 8.0
+      alternatives: name=java link=/usr/bin/java path=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.191.b12-0.42.amzn1.x86_64/jre/bin/java
+
     - name: Download kafka.tgz
       get_url: url=http://mirror.ox.ac.uk/sites/rsync.apache.org/kafka/2.1.0/kafka_2.11-2.1.0.tgz dest=/tmp/kafka.tgz validate_certs=no
 
-    - name: Extract kafka.tgz to /opt
+    - name: Extract kafka.tgz to /opt/kafka
       unarchive: src=/tmp/kafka.tgz dest=/opt/
