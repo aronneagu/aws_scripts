@@ -1,0 +1,9 @@
+---
+- name: Install Kafka
+  hosts: localhost
+  tasks:
+    - name: Download kafka.tgz
+      get_url: url=http://mirror.ox.ac.uk/sites/rsync.apache.org/kafka/2.1.0/kafka_2.11-2.1.0.tgz dest=/tmp/kafka.tgz validate_certs=no
+
+    - name: Extract kafka.tgz to /opt
+      unarchive: src=/tmp/kafka.tgz dest=/opt/
