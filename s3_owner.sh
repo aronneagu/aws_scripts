@@ -18,8 +18,8 @@ do
   bucket_owner=''
   bucket_owner=$(aws --output text --profile "$aws_profile" s3api get-bucket-tagging --bucket "$bucket" --query "TagSet[?Key=='data_owner'].Value|[0]" 2>/dev/null)
   # Handle the situation when data_owner tag is not defined bucket_owner will have value "None"
-  if [ "$bucket_owner" = "None" ]; then
-       bucket_owner=''
+  if [ -z "$bucket_owner" ]; then
+       bucket_owner="None"
   fi
   echo "$bucket $bucket_owner" >> "$tmpfile"
 done
