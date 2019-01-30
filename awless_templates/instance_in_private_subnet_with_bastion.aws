@@ -1,0 +1,43 @@
+# Title: Create VPC with one public subnet and one instance
+# To execute: awless run -f instance_in_single_az_vpc.aws
+# Connect to instance: awless ssh test-ec2 --through bastion
+
+# Variables
+vpc.cidr = 10.8.11.0/24
+public_subnet.cidr = 10.8.11.0/25
+private_subnet.cidr = 10.8.11.128/25
+instance.distro = amazonlinux
+instance.keypair = aron.neagu
+instance.name = test-ec2
+bastion_securitygroup.name = bastion-sg
+instance_securitygroup.name = instance-sg
+
+# Variables - no need to change these
+vpc.name = $vpc.cidr
+public_subnet.name = $public_subnet.cidr
+private_subnet.name = $private_subnet.cidr
+bastion_securitygroup.description = $bastion_securitygroup.name
+instance_securitygroup.description = $instance_securitygroup.name
+
+vpc = create vpc cidr=$vpc.cidr name=$vpc.name
+igw = create internetgateway
+attach internetgateway id=$igw vpc=$vpc
+
+public_subnet = create subnet cidr=$public_subnet.cidr name=$public_subnet.name vpc=$vpc public=true availabilityzone=eu-west-1a
+public_routetable = create routetable vpc=$vpc
+create route table=$public_routetable cidr=0.0.0.0/0 gateway=$igw
+attach routetable id=$public_routetable subnet=$public_subnet
+
+private_subnet = create subnet cidr=$private_subnet.cidr name=$private_subnet.name vpc=$vpc public=false availabilityzone=eu-west-1a
+private_routetable = create routetable vpc=$vpc
+attach routetable id=$private_routetable subnet=$private_subnet
+
+bastion_securitygroup = create securitygroup name=$bastion_securitygroup.name description=$bastion_securitygroup.description vpc=$vpc
+update securitygroup id=$bastion_securitygroup inbound=authorize protocol=tcp cidr=0.0.0.0/0 portrange=22
+
+instance_securitygroup = create securitygroup name=$instance_securitygroup.name description=$instance_securitygroup.description vpc=$vpc
+update securitygroup id=$instance_securitygroup inbound=authorize protocol=tcp securitygroup=$bastion_securitygroup portrange=22
+
+create instance subnet=$public_subnet count=1 distro=$instance.distro type=t2.nano keypair=$instance.keypair name=bastion securitygroup=$bastion_securitygroup
+create instance subnet=$private_subnet count=1 distro=$instance.distro type=t2.nano keypair=$instance.keypair name=test-ec2 securitygroup=$instance_securitygroup
+
